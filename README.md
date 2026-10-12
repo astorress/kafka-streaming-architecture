@@ -4,16 +4,13 @@ Laboratorio autocontenido para estudiar Apache Kafka: KRaft, brokers y quorum de
 productores confiables, consumer groups, offsets, transacciones, retención/compactación, rendimiento y resiliencia.
 Incluye una tubería reproducible de lecturas AMI para seguir eventos desde el productor hasta consumidores y alertas.
 
-El mismo dataset sintético se utiliza en los repositorios especializados de Hadoop y Spark. Kafka aquí se estudia como
-plataforma de eventos; no requiere esos otros clústeres.
-
 ## Arquitectura
 
 ![Arquitectura del clúster Kafka y su flujo de eventos](docs/architecture.png)
 
 Diagrama editable: [`docs/architecture.drawio`](docs/architecture.drawio).
 
-## Arquitectura
+## Servicios
 
 | Servicio | Responsabilidad | Acceso |
 | --- | --- | --- |
@@ -48,7 +45,7 @@ volúmenes del clúster para repetirlas; el reset de topics no borra los datos d
 
 | # | Tema | Qué observar |
 | --- | --- | --- |
-| 00 | Dataset común | Semilla de medidores y mensajes reproducibles |
+| 00 | Dataset sintético | Semilla de medidores y mensajes reproducibles |
 | 01 | KRaft | Brokers, controller quorum y metadata |
 | 02 | Particiones y réplicas | Asignación, leader, ISR, claves y orden |
 | 03 | Productor confiable | `acks=all`, idempotencia, compresión y callbacks |

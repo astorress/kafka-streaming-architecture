@@ -1,4 +1,4 @@
-"""Genera el dataset AMI compartido por los laboratorios Hadoop, Spark y Kafka."""
+"""Genera el dataset AMI sintético y crea el topic principal de lecturas."""
 import csv
 from pathlib import Path
 

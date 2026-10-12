@@ -2,13 +2,11 @@
 #
 #   meters       1.000 medidores: tipo de cliente, estrato, ciudad, circuito (feeder) y potencia contratada
 #   readings     una lectura cada 15 minutos por medidor durante septiembre de 2026 (2,88 millones de filas)
-#   weather      temperatura horaria por ciudad
-#   inspections  resultado de 300 visitas de campo hechas en octubre (las etiquetas para el modelo de fraude)
 #
-# Todo sale de una semilla fija: cada ejecución genera exactamente los mismos datos. Por eso las lecciones pueden
-# comparar los resultados de un modelo con la verdad (FRAUD, STUCK), algo que en la vida real no se conoce.
+# Todo sale de una semilla fija: cada ejecución genera exactamente los mismos datos. El consumo depende de una
+# temperatura horaria por ciudad e incluye anomalías conocidas (FRAUD, STUCK) y eventos de red.
 import random
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timedelta
 
 import numpy as np
 
@@ -17,8 +15,6 @@ METERS = 1000
 START = date(2026, 9, 1)
 DAYS = 30
 SLOTS = 96  # lecturas de 15 minutos por día
-TZ = timezone(timedelta(hours=-5),
-              "America/Bogota")  # hora local de las lecturas (Colombia no tiene horario de verano)
 
 # ciudad: (código, peso, temperatura media, amplitud diaria)
 CITIES = {
@@ -125,14 +121,6 @@ def _weather_grid():
 WEATHER = _weather_grid()
 
 
-def weather():
-    for city in CITIES:
-        for d, day in enumerate(days()):
-            for hour in range(24):
-                yield city, datetime.combine(
-                    day, datetime.min.time()) + timedelta(hours=hour), WEATHER[city][d, hour]
-
-
 def day_readings(day):
     """Lecturas de un día: arrays (medidores x 96) de kWh y voltaje, sin errores de calidad de datos."""
     d = (day - START).days
@@ -193,22 +181,3 @@ def readings_csv(day):
             if duplicated[i, s]:
                 lines.append(line)
     return "\n".join(lines) + "\n"
-
-
-def inspections():
-    """300 visitas de campo en octubre: 30 de los 40 fraudes, 3 de los 5 medidores dañados y 267 normales."""
-    rng = random.Random(SEED + 2)
-    fraud = rng.sample(sorted(FRAUD), 30)
-    stuck = rng.sample(sorted(STUCK), 3)
-    normal = rng.sample([m["meter_id"] for m in METER_LIST if m["meter_id"] not in set(FRAUD) | set(STUCK)],
-                        267)
-    rows = [(m, "fraude") for m in fraud] + [(m, "medidor dañado") for m in stuck] + [(m, "normal")
-                                                                                      for m in normal]
-    rng.shuffle(rows)
-    return [(m, (date(2026, 10, 1) + timedelta(days=rng.randint(0, 9))).isoformat(), result)
-            for m, result in rows]
-
-
-def epoch_ms(ts):
-    """'2026-09-30 18:00:00' (hora de Colombia) -> milisegundos desde 1970, como los timestamps de Kafka."""
-    return int(datetime.strptime(ts, "%Y-%m-%d %H:%M:%S").replace(tzinfo=TZ).timestamp() * 1000)
